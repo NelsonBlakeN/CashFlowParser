@@ -57,7 +57,7 @@ for cellObj in sheet['A1':'C3']:
     print('--- END ---')
 
 # Retrieve the maximum amount of rows
-sheet.max_row
+print(sheet.max_row)
 
 # Retrueve the maximm amount of columns
 sheet.max_column
