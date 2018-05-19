@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 import sys
 import os
 from pprint import pprint
@@ -8,7 +6,7 @@ try:
 except Exception as e:
     # Catch error with backup log file from stdout
     print("ERROR logging import failed: {}".format(e))
-    sys.exit()
+    sys.exit(1)
 
 # Create logging utility
 LOGFILE = "/home/blake/Documents/logs/CashFlowParser.log"
@@ -26,23 +24,25 @@ try:
     from datetime import date, datetime
     from dateutil.relativedelta import relativedelta
 
+    from EmailUtils import *
+
+    # Utilities
     from collections import defaultdict
     from tabulate import tabulate
+    from email.mime.multipart import MIMEMultipart
+    from email.mime.text import MIMEText
+    import smtplib
 except Exception as e:
     logger.error("Import error: {}".format(e))
     logger.error("Exiting.")
     sys.exit(1)
 
-class Main:
+class CashFlowParser:
     def __init__(self):
         try:
             # Workbook related items
             self.book = load_workbook(WBPATH)
             self.sheetnames = self.book.sheetnames
-            # for name in self.sheetnames:
-            #     if name == str(datetime.now().year):
-            #         sheet = name
-            # self.sheet = self.book[sheet]
 
             # Relevant columns
             self.DATE = 1
@@ -149,11 +149,9 @@ class Main:
                 expense_sum += float(expense[TOTAL])
 
         print("6 MONTH EXPENSE: {}".format(expense_sum))
-        print(tabulate(expense_list, headers=["Desc.", "Freq", "Total", "Avg"], tablefmt='orgtbl', floatfmt=".2f"))
+        return expense_sum, tabulate(expense_list, headers=["Desc.", "Freq", "Total", "Avg"], tablefmt='orgtbl', floatfmt=".2f")
 
     def grossExpenses(self):
-        # A year ago
-        one_year = datetime.today() - relativedelta(years=1)
         # 3 months ago
         three_months = datetime.today() - relativedelta(months=3)
 
@@ -162,26 +160,44 @@ class Main:
 
         gross_list = self.orderExpenses(three_months, order=TOTAL)
 
-        print(tabulate(gross_list, headers=["Desc.", "Freq", "Total", "Avg"], tablefmt='orgtbl', floatfmt=".2f"))
+        return tabulate(gross_list, headers=["Desc.", "Freq", "Total", "Avg"], tablefmt='orgtbl', floatfmt=".2f")
 
     def freqExpenses(self):
-        # A year ago
-        one_year = datetime.today() - relativedelta(years=1)
         # 3 months ago
         three_months = datetime.today() - relativedelta(months=3)
 
         # Tuple positions, for ordering
         FREQUENCY = 1
 
-        most_frequent_list = self.orderExpenses(date=three_months, order=FREQUENCY)
-        # gross_list = self.orderExpenses(date=three_months, order=TOTAL)
+        frequency_list = self.orderExpenses(date=three_months, order=FREQUENCY)
 
-        print(tabulate(most_frequent_list, headers=["Desc.", "Freq", "Total", "Avg"], tablefmt='orgtbl', floatfmt=".2f"))
-        print()
-        # print(tabulate(gross_list, headers=["Desc.", "Freq", "Total", "Avg"], tablefmt='orgtbl', floatfmt=".2f"))
+        return tabulate(frequency_list, headers=["Desc.", "Freq", "Total", "Avg"], tablefmt='orgtbl', floatfmt=".2f")
 
-if __name__ == "__main__":
-    m = Main()
-    # m.freqExpenses()
-    # m.grossExpenses()
-    m.sixMonthExpenses()
+    def sendMail(self, content):
+        msg = MIMEMultipart("alternative", None, [MIMEText(content)])
+
+        msg['Subject'] = "Weekly Expense Report"
+        msg['From'] = FROM
+        msg['To'] = TO
+        server = smtplib.SMTP(SERVER)
+        server.ehlo()
+        server.starttls()
+        print("Signing into gmail with " + TO + ", " + PASSWORD)
+        server.login(TO, PASSWORD)    # Authenticate with the actual gmail account
+        server.sendmail(FROM, TO, msg.as_string())
+        server.quit()
+
+    def sendExpenseReport(self):
+        frequency_table = self.freqExpenses()
+        gross_expense_table = self.grossExpenses()
+        six_month_sum, six_month_table = self.sixMonthExpenses()
+        content = EMAILTXT.format(frequency_table, gross_expense_table, six_month_sum, six_month_table)
+
+        self.sendMail(content=content)
+
+# if __name__ == "__main__":
+#     m = Main()
+#     # m.freqExpenses()
+#     # m.grossExpenses()
+#     # m.sixMonthExpenses()
+#     m.sendExpenseReport()

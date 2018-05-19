@@ -1,4 +1,5 @@
 *.pyc
 Workbook.py
 .*
-!/.gitignore
+EmailUtils.py
+
