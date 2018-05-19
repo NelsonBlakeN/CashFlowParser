@@ -145,7 +145,8 @@ class Main:
         for expense in expense_list:
             # Values were converted to strings for table formatting,
             # these have to be reverted for summing
-            expense_sum += float(expense[TOTAL])
+            if float(expense[TOTAL]) > 0:
+                expense_sum += float(expense[TOTAL])
 
         print("6 MONTH EXPENSE: {}".format(expense_sum))
         print(tabulate(expense_list, headers=["Desc.", "Freq", "Total", "Avg"], tablefmt='orgtbl', floatfmt=".2f"))
