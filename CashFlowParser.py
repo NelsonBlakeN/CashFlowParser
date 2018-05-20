@@ -148,7 +148,6 @@ class CashFlowParser:
             if float(expense[TOTAL]) > 0:
                 expense_sum += float(expense[TOTAL])
 
-        print("6 MONTH EXPENSE: {}".format(expense_sum))
         return expense_sum, tabulate(expense_list, headers=["Desc.", "Freq", "Total", "Avg"], tablefmt='orgtbl', floatfmt=".2f")
 
     def grossExpenses(self):
@@ -182,7 +181,6 @@ class CashFlowParser:
         server = smtplib.SMTP(SERVER)
         server.ehlo()
         server.starttls()
-        print("Signing into gmail with " + TO + ", " + PASSWORD)
         server.login(TO, PASSWORD)    # Authenticate with the actual gmail account
         server.sendmail(FROM, TO, msg.as_string())
         server.quit()
