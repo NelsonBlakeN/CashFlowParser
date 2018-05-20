@@ -194,10 +194,3 @@ class CashFlowParser:
         content = EMAILTXT.format(frequency_table, gross_expense_table, six_month_sum, six_month_table)
 
         self.sendMail(content=content)
-
-# if __name__ == "__main__":
-#     m = Main()
-#     # m.freqExpenses()
-#     # m.grossExpenses()
-#     # m.sixMonthExpenses()
-#     m.sendExpenseReport()
