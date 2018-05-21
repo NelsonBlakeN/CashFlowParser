@@ -40,6 +40,8 @@ except Exception as e:
     logger.error("Exiting.")
     sys.exit(1)
 
+# Class of functions that assist in sending
+# the expense report.
 class CashFlowParser:
     def __init__(self):
         try:
@@ -60,6 +62,7 @@ class CashFlowParser:
 
     # Given: Excel formula (i.e.: =-1.25-8.24)
     # OR just a normal number - function will execute as normal
+    # Returns the numerical value of the formula
     def numeric(self, formula):
         return eval(formula.replace("=", ""))
 
@@ -136,6 +139,9 @@ class CashFlowParser:
 
         return sorted(final_list, key=lambda tup: float(tup[order]), reverse=True)
 
+    # Create an HTML of all expenses, ordered by
+    # highest to lowest gross spending, for the last
+    # 6 months. Also returns a total sum of expenses for the last 6 months
     def sixMonthExpenses(self):
         six_months = datetime.today() - relativedelta(months=6)
 
@@ -153,6 +159,9 @@ class CashFlowParser:
 
         return expense_sum, tabulate(expense_list, headers=["Desc.", "Freq", "Total", "Avg"], tablefmt='html', floatfmt=".2f")
 
+    # Create an HTML table of expenses,
+    # ordered from highest to lowest gross spending,
+    # for the last 3 months
     def grossExpenses(self):
         # 3 months ago
         three_months = datetime.today() - relativedelta(months=3)
@@ -164,6 +173,9 @@ class CashFlowParser:
 
         return tabulate(gross_list, headers=["Desc.", "Freq", "Total", "Avg"], tablefmt='html', floatfmt=".2f")
 
+    # Create an HTML table of expenses,
+    # ordered by highest to lowest frequency
+    # for the last 3 months
     def freqExpenses(self):
         # 3 months ago
         three_months = datetime.today() - relativedelta(months=3)
@@ -175,6 +187,8 @@ class CashFlowParser:
 
         return tabulate(frequency_list, headers=["Desc.", "Freq", "Total", "Avg"], tablefmt='html', floatfmt=".2f")
 
+    # Send an email with the given contents
+    # Content should be formatted as HTML
     def sendMail(self, content):
         msg = MIMEMultipart("alternative", None, [MIMEText(content, 'html')])
 
@@ -188,6 +202,7 @@ class CashFlowParser:
         server.sendmail(FROM, TO, msg.as_string())
         server.quit()
 
+    # Create the expense report and send it.
     def sendExpenseReport(self):
         frequency_table = self.freqExpenses()
         gross_expense_table = self.grossExpenses()
