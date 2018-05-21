@@ -1,11 +1,20 @@
-import sys
-import os
-from pprint import pprint
+# System imports
 try:
+    import sys
+    import os
     import logging
+    import smtplib
+    from datetime import date, datetime
+    from collections import defaultdict
+    from email.mime.multipart import MIMEMultipart
+    from email.mime.text import MIMEText
 except Exception as e:
-    # Catch error with backup log file from stdout
-    print("ERROR logging import failed: {}".format(e))
+    # Manually log error
+    f = open("/home/blake/Documents/logs/expense_report.log", "w+")
+    f.write("ERROR importing system libraries:")
+    f.write("{}".format(e))
+    f.write("Exiting.\n")
+    f.close()
     sys.exit(1)
 
 # Create logging utility
@@ -13,6 +22,7 @@ LOGFILE = "/home/blake/Documents/logs/CashFlowParser.log"
 logging.basicConfig(filename=LOGFILE, level=logging.INFO)
 logger = logging.getLogger("CashFlowParser")
 
+# Pip requirements
 try:
     # Import xlsx module
     from openpyxl import load_workbook
@@ -20,20 +30,13 @@ try:
     # Import workbook path (private)
     from Workbook import *
 
-    # Date related imports
-    from datetime import date, datetime
-    from dateutil.relativedelta import relativedelta
-
-    from EmailUtils import *
-
-    # Utilities
-    from collections import defaultdict
+    # Other utilities
     from tabulate import tabulate
-    from email.mime.multipart import MIMEMultipart
-    from email.mime.text import MIMEText
-    import smtplib
+    from dateutil.relativedelta import relativedelta
+    from EmailUtils import *
 except Exception as e:
-    logger.error("Import error: {}".format(e))
+    logger.error("ERROR importing pip requirements:\n {}".format(e))
+    logger.error("Make sure the requirements.txt file was properly imported.")
     logger.error("Exiting.")
     sys.exit(1)
 
