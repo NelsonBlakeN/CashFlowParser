@@ -18,7 +18,7 @@ except Exception as e:
     sys.exit(1)
 
 # Create logging utility
-LOGFILE = "/home/blake/Documents/logs/CashFlowParser.log"
+LOGFILE = "/home/blake/Documents/logs/expense_report.log"
 logging.basicConfig(filename=LOGFILE, level=logging.INFO)
 logger = logging.getLogger("CashFlowParser")
 
@@ -33,9 +33,9 @@ try:
     # Other utilities
     from tabulate import tabulate
     from dateutil.relativedelta import relativedelta
-    from EmailUtils import *
+    from EmailUtils import FROM, TO, SERVER, PASSWORD, EMAILTXT
 except Exception as e:
-    logger.error("ERROR importing pip requirements:\n {}".format(e))
+    logger.error("Couldn't import pip requirements:\n {}".format(e))
     logger.error("Make sure the requirements.txt file was properly imported.")
     logger.error("Exiting.")
     sys.exit(1)
@@ -151,7 +151,7 @@ class CashFlowParser:
             if float(expense[TOTAL]) > 0:
                 expense_sum += float(expense[TOTAL])
 
-        return expense_sum, tabulate(expense_list, headers=["Desc.", "Freq", "Total", "Avg"], tablefmt='orgtbl', floatfmt=".2f")
+        return expense_sum, tabulate(expense_list, headers=["Desc.", "Freq", "Total", "Avg"], tablefmt='html', floatfmt=".2f")
 
     def grossExpenses(self):
         # 3 months ago
@@ -162,7 +162,7 @@ class CashFlowParser:
 
         gross_list = self.orderExpenses(three_months, order=TOTAL)
 
-        return tabulate(gross_list, headers=["Desc.", "Freq", "Total", "Avg"], tablefmt='orgtbl', floatfmt=".2f")
+        return tabulate(gross_list, headers=["Desc.", "Freq", "Total", "Avg"], tablefmt='html', floatfmt=".2f")
 
     def freqExpenses(self):
         # 3 months ago
@@ -173,10 +173,10 @@ class CashFlowParser:
 
         frequency_list = self.orderExpenses(date=three_months, order=FREQUENCY)
 
-        return tabulate(frequency_list, headers=["Desc.", "Freq", "Total", "Avg"], tablefmt='orgtbl', floatfmt=".2f")
+        return tabulate(frequency_list, headers=["Desc.", "Freq", "Total", "Avg"], tablefmt='html', floatfmt=".2f")
 
     def sendMail(self, content):
-        msg = MIMEMultipart("alternative", None, [MIMEText(content)])
+        msg = MIMEMultipart("alternative", None, [MIMEText(content, 'html')])
 
         msg['Subject'] = "Weekly Expense Report"
         msg['From'] = FROM
