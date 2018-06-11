@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 
-from CashFlowParser import CashFlowParser
+import sys
+from CashFlowParser import CashFlowParser, LOGFILE
 
 try:
     cfp = CashFlowParser()
     cfp.sendExpenseReport()
 except Exception as e:
-    print("Something went wrong in app execution:")
+    print("- Something went wrong in app execution:")
     print(e)
+    print("- See " + LOGFILE + " for more details.")
     sys.exit(1)
