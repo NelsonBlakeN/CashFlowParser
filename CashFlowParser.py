@@ -45,6 +45,7 @@ except Exception as e:
 class CashFlowParser:
     def __init__(self):
         try:
+            logger.info("Initializing object...")
             # Workbook related items
             self.book = load_workbook(WBPATH)
             self.sheetnames = self.book.sheetnames
@@ -54,11 +55,13 @@ class CashFlowParser:
             self.DESC = 2
             self.VALUE = 3
 
+            logger.info("Initialization complete.")
+
         except Exception as e:
             logger.error("Failed to initialize.")
             logger.error("{}".format(e))
             logger.error("Exiting.")
-            sys.exit()
+            sys.exit(1)
 
     # Given: Excel formula (i.e.: =-1.25-8.24)
     # OR just a normal number - function will execute as normal
@@ -73,24 +76,35 @@ class CashFlowParser:
         if date is None:
             return None
 
+        # List of sheets
         sheets = []
-        # If the date spans multiple years,
-        # grab last years sheet
+        # List of sheet names (for logging purposes)
+        names = []
+        # If the date spans multiple years (given date is not this year),
+        # grab this years sheet first.
         if date.year != datetime.today().year:
             for name in self.sheetnames:
                 if name == str(datetime.today().year):
                     sheets.append(self.book[name])
+                    names.append(name)
 
-        # Grab the current years sheet
+        # Grab the given years sheet
         for name in self.sheetnames:
             if name == str(date.year):
                 sheets.append(self.book[name])
+                names.append(name)
+
+        # Sheet list as string
+        shs = ", ".join(names)
+        logger.info("Reading " + str(len(names)) + " sheet(s): " + shs)
+
         return sheets
 
     # Takes given date, and what to order on
     # Finds all expenses within the given timeframe, sums them
     # and returns a sorted list
     def orderExpenses(self, date=None, order=None):
+        logger.info("Ordering expenses...")
         if date is None or order is None:
             return None
 
@@ -105,6 +119,8 @@ class CashFlowParser:
         # Collect data for all 1+ sheets
         print("Collecting data for " + str(len(sheets)) + " sheets")
         for sheet in sheets:
+            logger.info("Collecting information from " + str(sheet))
+
             date_column = list(sheet.columns)[self.DATE]
             desc_column = list(sheet.columns)[self.DESC]
             value_column = list(sheet.columns)[self.VALUE]
@@ -141,12 +157,15 @@ class CashFlowParser:
             avg = '%.2f' % (exp[1]/freq)
             final_list.append((desc, freq, total, avg))
 
+        logger.info("Sorted list was collected, returning result.")
+
         return sorted(final_list, key=lambda tup: float(tup[order]), reverse=True)
 
     # Create an HTML of all expenses, ordered by
     # highest to lowest gross spending, for the last
     # 6 months. Also returns a total sum of expenses for the last 6 months
     def sixMonthExpenses(self):
+        logger.info("Collecting six month expenses...")
         six_months = datetime.today() - relativedelta(months=6)
 
         # "Total" index in tuple
@@ -161,6 +180,7 @@ class CashFlowParser:
             if float(expense[TOTAL]) > 0:
                 expense_sum += float(expense[TOTAL])
 
+        logger.info("Returning HTML table and total 6 month expense.")
         return expense_sum, tabulate(expense_list, headers=["Desc.", "Freq", "Total", "Avg"], tablefmt='html', floatfmt=".2f")
 
     def twoWeekExpenses(self):
@@ -177,6 +197,7 @@ class CashFlowParser:
     # ordered from highest to lowest gross spending,
     # for the last 3 months
     def grossExpenses(self):
+        logger.info("Collecting expenses based on gross total...")
         # 3 months ago
         three_months = datetime.today() - relativedelta(months=3)
 
@@ -185,12 +206,14 @@ class CashFlowParser:
 
         gross_list = self.orderExpenses(three_months, order=TOTAL)
 
+        logger.info("Returning HTML table for gross expenses.")
         return tabulate(gross_list, headers=["Desc.", "Freq", "Total", "Avg"], tablefmt='html', floatfmt=".2f")
 
     # Create an HTML table of expenses,
     # ordered by highest to lowest frequency
     # for the last 3 months
     def freqExpenses(self):
+        logger.info("Collecting expenses based on frequency...")
         # 3 months ago
         three_months = datetime.today() - relativedelta(months=3)
 
@@ -199,11 +222,13 @@ class CashFlowParser:
 
         frequency_list = self.orderExpenses(date=three_months, order=FREQUENCY)
 
+        logger.info("Returning HTML table for frequent expenses.")
         return tabulate(frequency_list, headers=["Desc.", "Freq", "Total", "Avg"], tablefmt='html', floatfmt=".2f")
 
     # Send an email with the given contents
     # Content should be formatted as HTML
     def sendMail(self, content):
+        logger.info("Sending email...")
         msg = MIMEMultipart("alternative", None, [MIMEText(content, 'html')])
 
         msg['Subject'] = "Weekly Expense Report"
@@ -216,8 +241,11 @@ class CashFlowParser:
         server.sendmail(FROM, TO, msg.as_string())
         server.quit()
 
+        logger.info("Email sent successfully.")
+
     # Create the expense report and send it.
     def sendExpenseReport(self):
+        logger.info("Beginning expense report creation.")
         frequency_table = self.freqExpenses()
         gross_expense_table = self.grossExpenses()
         six_month_sum, six_month_table = self.sixMonthExpenses()
@@ -225,3 +253,4 @@ class CashFlowParser:
         content = EMAILTXT.format(two_weeks_table, frequency_table, gross_expense_table, six_month_sum, six_month_table)
 
         self.sendMail(content=content)
+        logger.info("Expense report sent.")
