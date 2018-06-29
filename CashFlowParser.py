@@ -128,9 +128,16 @@ class CashFlowParser:
             # Find row corresponding to given date
             start_row = None
             end_row = None
+            print("Looking for a date after " + str(date))
             for cell in date_column[2:]:                    # Skip first 2 cells
-                if type(cell.value) is not str and start_row is None and cell.value >= date:
-                    start_row = int(cell.coordinate[1:])    # Only need the row number
+                #print("Comparing " + str(cell.value))
+                # "is not str": Ignore monthly summary titles
+                # "start_row is None": Do not override when searching for end row
+                # "cell.value is not None": Edge case
+                if type(cell.value) is not str and start_row is None and cell.value is not None:
+                    if cell.value >= date:
+                        start_row = int(cell.coordinate[1:])    # Only need the row number
+                        print("Found start row: " + str(start_row))
                 if type(cell.value) is not str and cell.value is None:
                     end_row = int(cell.coordinate[1:])      # Only need the row number
                     break                                   # Finish at the first blank cell
@@ -139,14 +146,16 @@ class CashFlowParser:
             print("Ending at " + str(end_row))
 
             # Collect expenses
-            for cell in desc_column[start_row:end_row-1]:
-                desc = cell.value
-                i = desc_column.index(cell)
-                val = value_column[i].value
-                if val is not None:
-                    val = -self.numeric(str(val))
-                    expenses[desc] += val
-                    frequency[desc] += 1
+            if start_row is not None:
+                for cell in desc_column[start_row:end_row-1]:
+                    desc = cell.value
+                    i = desc_column.index(cell)
+                    val = value_column[i].value
+                    if val is not None:
+                        val = -self.numeric(str(val))
+                        if val > 0:
+                            expenses[desc] += val
+                            frequency[desc] += 1
 
         ordered_list = sorted(expenses.items(), key=lambda kv: kv[1], reverse=True)
         final_list = []
