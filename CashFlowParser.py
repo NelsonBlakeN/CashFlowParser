@@ -103,6 +103,7 @@ class CashFlowParser:
         sheets = self.getSheets(date)
 
         # Collect data for all 1+ sheets
+        print("Collecting data for " + str(len(sheets)) + " sheets")
         for sheet in sheets:
             date_column = list(sheet.columns)[self.DATE]
             desc_column = list(sheet.columns)[self.DESC]
@@ -117,6 +118,9 @@ class CashFlowParser:
                 if type(cell.value) is not str and cell.value is None:
                     end_row = int(cell.coordinate[1:])      # Only need the row number
                     break                                   # Finish at the first blank cell
+
+            print("Starting at " + str(start_row))
+            print("Ending at " + str(end_row))
 
             # Collect expenses
             for cell in desc_column[start_row:end_row-1]:
@@ -158,6 +162,16 @@ class CashFlowParser:
                 expense_sum += float(expense[TOTAL])
 
         return expense_sum, tabulate(expense_list, headers=["Desc.", "Freq", "Total", "Avg"], tablefmt='html', floatfmt=".2f")
+
+    def twoWeekExpenses(self):
+        two_weeks = datetime.today() - relativedelta(weeks=2)
+
+        # "Total" index in tuple
+        TOTAL = 2
+
+        expense_list = self.orderExpenses(date=two_weeks, order=TOTAL)
+
+        return tabulate(expense_list, headers=["Desc.", "Freq", "Total", "Avg"], tablefmt='html', floatfmt=".2f")
 
     # Create an HTML table of expenses,
     # ordered from highest to lowest gross spending,
@@ -207,6 +221,7 @@ class CashFlowParser:
         frequency_table = self.freqExpenses()
         gross_expense_table = self.grossExpenses()
         six_month_sum, six_month_table = self.sixMonthExpenses()
-        content = EMAILTXT.format(frequency_table, gross_expense_table, six_month_sum, six_month_table)
+        two_weeks_table = self.twoWeekExpenses()
+        content = EMAILTXT.format(two_weeks_table, frequency_table, gross_expense_table, six_month_sum, six_month_table)
 
         self.sendMail(content=content)
