@@ -169,7 +169,7 @@ class CashFlowParser:
         logger.info("Sorted list was collected, returning result.")
 
         # Return first 10 items
-        return sorted(final_list[:10], key=lambda tup: float(tup[order]), reverse=True)
+        return sorted(final_list, key=lambda tup: float(tup[order]), reverse=True)[:10]
 
     # Create an HTML of all expenses, ordered by
     # highest to lowest gross spending, for the last
