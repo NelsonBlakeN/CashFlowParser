@@ -128,7 +128,6 @@ class CashFlowParser:
             # Find row corresponding to given date
             start_row = None
             end_row = None
-            print("Looking for a date after " + str(date))
             for cell in date_column[2:]:                    # Skip first 2 cells
                 #print("Comparing " + str(cell.value))
                 # "is not str": Ignore monthly summary titles
@@ -137,13 +136,9 @@ class CashFlowParser:
                 if type(cell.value) is not str and start_row is None and cell.value is not None:
                     if cell.value >= date:
                         start_row = int(cell.coordinate[1:])    # Only need the row number
-                        print("Found start row: " + str(start_row))
                 if type(cell.value) is not str and cell.value is None:
                     end_row = int(cell.coordinate[1:])      # Only need the row number
                     break                                   # Finish at the first blank cell
-
-            print("Starting at " + str(start_row))
-            print("Ending at " + str(end_row))
 
             # Collect expenses
             if start_row is not None:
