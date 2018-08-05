@@ -117,7 +117,6 @@ class CashFlowParser:
         sheets = self.getSheets(date)
 
         # Collect data for all 1+ sheets
-        print("Collecting data for " + str(len(sheets)) + " sheets")
         for sheet in sheets:
             logger.info("Collecting information from " + str(sheet))
 
