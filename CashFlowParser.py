@@ -15,7 +15,7 @@ except Exception as e:
     f.write("{}".format(e))
     f.write("Exiting.\n")
     f.close()
-    sys.exit(1)
+    raise e
 
 # Create logging utility
 LOGFILE = "/home/blake/Documents/logs/expense_report.log"
@@ -35,10 +35,15 @@ try:
     from dateutil.relativedelta import relativedelta
     from EmailUtils import FROM, TO, SERVER, PASSWORD, EMAILTXT
 except Exception as e:
-    logger.error("Couldn't import pip requirements:\n {}".format(e))
+    logger.error("Couldn't import pip requirements.")
     logger.error("Make sure the requirements.txt file was properly imported.")
     logger.error("Exiting.")
-    sys.exit(1)
+    raise e
+
+# External constants
+# Tuple order for ordering expense rows
+FREQUENCY = 1
+TOTAL = 2
 
 # Class of functions that assist in sending
 # the expense report.
@@ -61,7 +66,7 @@ class CashFlowParser:
             logger.error("Failed to initialize.")
             logger.error("{}".format(e))
             logger.error("Exiting.")
-            sys.exit(1)
+            raise e
 
     # Given: Excel formula (i.e.: =-1.25-8.24)
     # OR just a normal number - function will execute as normal
@@ -172,9 +177,6 @@ class CashFlowParser:
         logger.info("Collecting six month expenses...")
         six_months = datetime.today() - relativedelta(months=6)
 
-        # "Total" index in tuple
-        TOTAL = 2
-
         expense_list = self.orderExpenses(date=six_months, order=TOTAL)
 
         expense_sum = 0
@@ -189,9 +191,6 @@ class CashFlowParser:
 
     def twoWeekExpenses(self):
         two_weeks = datetime.today() - relativedelta(weeks=2)
-
-        # "Total" index in tuple
-        TOTAL = 2
 
         expense_list = self.orderExpenses(date=two_weeks, order=TOTAL)
 
@@ -211,9 +210,6 @@ class CashFlowParser:
         logger.info("Collecting expenses based on gross total...")
         # 3 months ago
         three_months = datetime.today() - relativedelta(months=3)
-
-        # Tuple position for ordering
-        TOTAL = 2
 
         gross_list = self.orderExpenses(three_months, order=TOTAL)
 
@@ -261,6 +257,10 @@ class CashFlowParser:
         gross_expense_table = self.grossExpenses()
         six_month_sum, six_month_table = self.sixMonthExpenses()
         two_weeks_sum, two_weeks_table = self.twoWeekExpenses()
+
+        six_month_sum = "${}".format(round(six_month_sum, 2))
+        two_weeks_sum = "${}".format(round(two_weeks_sum, 2))
+
         content = EMAILTXT.format(two_weeks_sum, two_weeks_table, frequency_table, gross_expense_table, six_month_sum, six_month_table)
 
         self.sendMail(content=content)
