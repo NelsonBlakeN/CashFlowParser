@@ -195,7 +195,14 @@ class CashFlowParser:
 
         expense_list = self.orderExpenses(date=two_weeks, order=TOTAL)
 
-        return tabulate(expense_list, headers=["Desc.", "Freq", "Total", "Avg"], tablefmt='html', floatfmt=".2f")
+        expense_sum = 0
+        for expense in expense_list:
+            # Values were converted to strings for table formatting,
+            # these have to be reverted for summing
+            if float(expense[TOTAL]) > 0:
+                expense_sum += float(expense[TOTAL])
+
+        return expense_sum, tabulate(expense_list, headers=["Desc.", "Freq", "Total", "Avg"], tablefmt='html', floatfmt=".2f")
 
     # Create an HTML table of expenses,
     # ordered from highest to lowest gross spending,
@@ -253,8 +260,8 @@ class CashFlowParser:
         frequency_table = self.freqExpenses()
         gross_expense_table = self.grossExpenses()
         six_month_sum, six_month_table = self.sixMonthExpenses()
-        two_weeks_table = self.twoWeekExpenses()
-        content = EMAILTXT.format(two_weeks_table, frequency_table, gross_expense_table, six_month_sum, six_month_table)
+        two_weeks_sum, two_weeks_table = self.twoWeekExpenses()
+        content = EMAILTXT.format(two_weeks_sum, two_weeks_table, frequency_table, gross_expense_table, six_month_sum, six_month_table)
 
         self.sendMail(content=content)
         logger.info("Expense report sent.")
